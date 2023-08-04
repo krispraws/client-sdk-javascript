@@ -1,0 +1,20 @@
+{
+  "name": "mo-flaring-cloud",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "deploy": "wrangler deploy",
+    "start": "wrangler dev"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230419.0",
+    "typescript": "^5.0.4",
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "@gomomento/sdk-web": "file:/Users/Ramya/Work/client-sdk-javascript/packages/client-sdk-web",
+    "@gomomento/sdk-core": "file:/Users/Ramya/Work/client-sdk-javascript/packages/core",
+    "xhr4sw": "0.0.5"
+  }
+}

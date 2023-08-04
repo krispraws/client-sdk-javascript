@@ -1,0 +1,10 @@
+name = "mo-flaring-cloud"
+main = "src/worker.ts"
+compatibility_date = "2023-08-01"
+node_compat = true
+
+[vars]
+MOMENTO_BASE_ENDPOINT = "cell-us-east-1-1.prod.a.momentohq.com"
+
+[build]
+command = "npm run build"
