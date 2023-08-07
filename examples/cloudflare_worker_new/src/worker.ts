@@ -27,12 +27,11 @@ export interface Env {
 	MOMENTO_BASE_ENDPOINT: string;
 }
   
-  async function momentoExample(sessionToken: string, baseEndpoint: string) {
+  async function momentoExample(sessionToken: string, baseEndpoint: string): Promise<string> {
 
 	const controlEndpoint = `control.${baseEndpoint}`;
 	const cacheEndpoint = `cache.${baseEndpoint}`;
 	const httpEndpoint = `api.cache.${baseEndpoint}`;
-  
 	// Here we construct an auth client, which is where the token APIs are exposed
 	const authClient = new AuthClient({
 	  credentialProvider: CredentialProvider.fromString({
@@ -70,35 +69,41 @@ export interface Env {
 	  throw new Error(`A problem occurred when listing caches: ${listCachesResponse.toString()}`);
 	}
   
-	console.log(`Found the following caches:\n${caches.map(c => c.getName()).join('\n')}`);
+	let response = `Found the following caches:\n${caches.map(c => c.getName()).join('\n')}`;
+	console.log(`${response}`);
   
-	// arbitrarily selecting the first cache:
-	const chosenCache = caches[0].getName();
-  
-	// Now we create a more restricted token that can be used in the user's cloudflare worker environment
-	const workerTokenResponse = await authClient.generateAuthToken(
-	  TokenScopes.cacheReadWrite(chosenCache),
-	  ExpiresIn.never()
-	);
-  
-	let workerApiToken;
-	if (workerTokenResponse instanceof GenerateAuthToken.Success) {
-	  workerApiToken = workerTokenResponse.authToken;
-	} else {
-	  throw new Error(`A problem occurred when generating auth token: ${workerTokenResponse.toString()}`);
+	if (caches && caches.length != 0) {
+		// arbitrarily selecting the first cache:
+		const chosenCache = caches[0].getName();
+	
+		// Now we create a more restricted token that can be used in the user's cloudflare worker environment
+		const workerTokenResponse = await authClient.generateAuthToken(
+		TokenScopes.cacheReadWrite(chosenCache),
+		ExpiresIn.never()
+		);
+	
+		let workerApiToken;
+		if (workerTokenResponse instanceof GenerateAuthToken.Success) {
+		workerApiToken = workerTokenResponse.authToken;
+		} else {
+		throw new Error(`A problem occurred when generating auth token: ${workerTokenResponse.toString()}`);
+		}
+	
+		// This is just a sanity check that the new token works properly
+		await verifyWorkerApiToken(workerApiToken, httpEndpoint, chosenCache);
+		// And now we're all done, and just need to store these values as secrets/env vars!
+		response += `\nIntegration complete! Here are the three required env vars:
+		
+MOMENTO_AUTH_TOKEN=${workerApiToken}
+MOMENTO_HTTP_ENDPOINT=${httpEndpoint}
+MOMENTO_CACHE=${chosenCache}
+			
+		`;
+    } else {
+		response += '\nNo caches found.';
 	}
-  
-	// This is just a sanity check that the new token works properly
-	await verifyWorkerApiToken(workerApiToken, httpEndpoint, chosenCache);
-  
-	// And now we're all done, and just need to store these values as secrets/env vars!
-	console.log(`Integration complete! Here are the three required env vars:
-  
-  MOMENTO_AUTH_TOKEN=${workerApiToken}
-  MOMENTO_HTTP_ENDPOINT=${httpEndpoint}
-  MOMENTO_CACHE=${chosenCache}
-  
-	`);
+	return response;
+
   }
   
   async function verifyWorkerApiToken(workerApiToken: string, httpEndpoint: string, cacheName: string) {
@@ -157,8 +162,8 @@ export default {
 			throw new Error('Missing required env var MOMENTO_BASE_ENDPOINT');
 		}
 
-		await momentoExample(sessionToken, baseEndpoint);
-		return new Response('Hello World!');
+		const resp = await momentoExample(sessionToken, baseEndpoint);
+		return new Response(resp);
 	
     },
 };
