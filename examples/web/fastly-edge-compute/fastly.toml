@@ -1,0 +1,23 @@
+# This file describes a Fastly Compute@Edge package. To learn more visit:
+# https://developer.fastly.com/reference/fastly-toml/
+
+authors = ["rmk@momentohq.com"]
+description = ""
+language = "javascript"
+manifest_version = 3
+name = "fastly_http"
+
+[local_server]
+
+  [local_server.backends]
+
+    [local_server.backends.aws_us_east_1_http]
+      url = "https://api.cache.cell-us-east-1-1.prod.a.momentohq.com"
+
+  [local_server.config_stores]
+    [local_server.config_stores.secrets]
+      file = "secrets.json"
+      format = "json"
+
+[scripts]
+  build = "npm run build"
